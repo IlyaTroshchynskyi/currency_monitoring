@@ -1,40 +1,33 @@
 from datetime import datetime
-import requests
-from models import XRate, db
-from config import logging, LOGGER_CONFIG
-
-log = logging.getLogger("PrivatApi")
-fh = logging.FileHandler(LOGGER_CONFIG["file"])
-fh.setLevel(LOGGER_CONFIG["level"])
-fh.setFormatter(LOGGER_CONFIG["formatter"])
-log.addHandler(fh)
-log.setLevel(LOGGER_CONFIG["level"])
+from api import _Api
 
 
-def update_xrates(from_currency, to_currency):
-    log.info("Started update for: %s=>%s" % (from_currency, to_currency))
-    xrate = XRate.query.filter_by(from_currency=from_currency,
-                                  to_currency=to_currency).first()
-    log.debug("rate before: %s", xrate)
-    xrate.rate = get_privat_rate(from_currency)
-    xrate.updated = datetime.utcnow()
-    db.session.commit()
-    log.debug("rate after: %s", xrate)
-    log.info("Finished update for: %s=>%s" % (from_currency, to_currency))
+class Api(_Api):
+    def __init__(self):
+        super().__init__("PrivatApi")
 
+    def _update_rate(self, xrate):
+        rate = self._get_privat_rate(xrate.from_currency)
+        return rate
 
-def get_privat_rate(from_currency):
-    response = requests.get("https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11")
-    response_json = response.json()
-    log.debug("Privat response: %s" % response_json)
-    usd_rate = find_usd_rate(response_json)
+    def _get_privat_rate(self, from_currency):
+        response = self._send_request(url="https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11",
+                                      method="get")
+        response_json = response.json()
+        self.log.debug("Privat response: %s" % response_json)
+        rate = self._find_rate(response_json, from_currency)
 
-    return usd_rate
+        return rate
 
+    def _find_rate(self, response_data, from_currency):
+        privat_aliases_map = {840: "USD", 1000: "BTC"}
 
-def find_usd_rate(response_data):
-    for e in response_data:
-        if e["ccy"] == "USD":
-            return float(e["sale"])
+        if from_currency not in privat_aliases_map:
+            raise ValueError(f"Invalid from_currency: {from_currency}")
 
-    raise ValueError("Invalid Privat response: USD not found")
+        currency_alias = privat_aliases_map[from_currency]
+        for e in response_data:
+            if e["ccy"] == currency_alias:
+                return float(e["sale"])
+
+        raise ValueError(f"Invalid Privat response: {currency_alias} not found")

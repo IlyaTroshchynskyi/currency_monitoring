@@ -1,5 +1,5 @@
 from datetime import datetime
-from app import db
+from app import db, app
 
 
 class XRate(db.Model):
@@ -13,10 +13,49 @@ class XRate(db.Model):
         return "XRate(%s=>%s): %s" % (self.from_currency, self.to_currency, self.rate)
 
 
+class ApiLog(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    request_url = db.Column(db.String(255))
+    request_data = db.Column(db.Text, nullable=True)
+    request_method = db.Column(db.String(100))
+    request_headers = db.Column(db.Text, nullable=True)
+    response_text = db.Column(db.Text, nullable=True)
+    created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    finished = db.Column(db.DateTime)
+    error = db.Column(db.Text, nullable=True)
+
+
+class ErrorLog(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    request_data = db.Column(db.Text, nullable=True)
+    request_url = db.Column(db.Text)
+    request_method = db.Column(db.String(255))
+    error = db.Column(db.Text)
+    traceback = db.Column(db.Text)
+    created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
+
 def init_db():
-    db.drop_all()
-    db.create_all()
+    # XRate.__table__.drop(app.config['SQLALCHEMY_DATABASE_URI'])
+    # XRate.__table__.create(app.config['SQLALCHEMY_DATABASE_URI'])
+    # db.drop_all()
+    # db.create_all()
+    XRate.query.delete()
     cur = XRate(from_currency=840, to_currency=980, rate=1)
-    db.session.add(cur)
+    cur2 = XRate(from_currency=978, to_currency=980, rate=1)
+    cur3 = XRate(from_currency=1000, to_currency=840, rate=1)
+    cur4 = XRate(from_currency=1000, to_currency=980, rate=1)
+    cur5 = XRate(from_currency=1000, to_currency=643, rate=1)
+    for item in [cur, cur2, cur3, cur4, cur5]:
+        db.session.add(item)
+
+    db.session.commit()
+
+    for m in (ApiLog, ErrorLog):
+        # m.__table__.drop(app.config['SQLALCHEMY_DATABASE_URI'])
+        # m.__table__.create(app.config['SQLALCHEMY_DATABASE_URI'])
+        m.query.delete()
     db.session.commit()
     print("db created!")
