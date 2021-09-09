@@ -10,7 +10,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
-# from models import XRate
+from models import *
 
 
 @app.route('/')

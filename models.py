@@ -8,6 +8,7 @@ class XRate(db.Model):
     to_currency = db.Column(db.Integer, index=True)
     rate = db.Column(db.Float)
     updated = db.Column(db.DateTime, default=datetime.utcnow())
+    module = db.Column(db.String(100))
 
     def __repr__(self):
         return "XRate(%s=>%s): %s" % (self.from_currency, self.to_currency, self.rate)
@@ -43,11 +44,12 @@ def init_db():
     # db.drop_all()
     # db.create_all()
     XRate.query.delete()
-    cur = XRate(from_currency=840, to_currency=980, rate=1)
-    cur2 = XRate(from_currency=978, to_currency=980, rate=1)
-    cur3 = XRate(from_currency=1000, to_currency=840, rate=1)
-    cur4 = XRate(from_currency=1000, to_currency=980, rate=1)
-    cur5 = XRate(from_currency=1000, to_currency=643, rate=1)
+    cur = XRate(from_currency=840, to_currency=980, rate=1, module="privat_api")
+    cur2 = XRate(from_currency=840, to_currency=643, rate=1, module="cbr_api")
+    cur3 = XRate(from_currency=1000, to_currency=840, rate=1, module="privat_api")
+    cur4 = XRate(from_currency=1000, to_currency=980, rate=1, module="cryptonator_api")
+    cur5 = XRate(from_currency=1000, to_currency=643, rate=1, module="cryptonator_api")
+
     for item in [cur, cur2, cur3, cur4, cur5]:
         db.session.add(item)
 

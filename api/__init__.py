@@ -1,5 +1,6 @@
 from datetime import datetime
 import traceback
+import importlib
 import requests
 from models import XRate, db, ApiLog, ErrorLog
 from config import logging, LOGGER_CONFIG, HTTP_TIMEOUT
@@ -10,22 +11,28 @@ fh.setLevel(LOGGER_CONFIG["level"])
 fh.setFormatter(LOGGER_CONFIG["formatter"])
 
 
+def update_rate(from_currency, to_currency):
+    xrate = XRate.query.filter_by(from_currency=from_currency,
+                                 to_currency=to_currency).first()
+
+    module = importlib.import_module(f"api.{xrate.module}")
+    module.Api().update_rate(xrate)
+
+
 class _Api:
     def __init__(self, logger_name):
         self.log = logging.getLogger(logger_name)
         self.log.addHandler(fh)
         self.log.setLevel(LOGGER_CONFIG["level"])
 
-    def update_rate(self, from_currency, to_currency):
-        self.log.info("Started update for: %s=>%s" % (from_currency, to_currency))
-        xrate = XRate.query.filter_by(from_currency=from_currency,
-                                      to_currency=to_currency).first()
+    def update_rate(self, xrate):
+        self.log.info("Started update for: %s" % xrate)
         self.log.debug("rate before: %s", xrate)
         xrate.rate = self._update_rate(xrate)
         xrate.updated = datetime.utcnow()
         db.session.commit()
         self.log.debug("rate after: %s", xrate)
-        self.log.info("Finished update for: %s=>%s" % (from_currency, to_currency))
+        self.log.info("Finished update for: %s" % xrate)
 
     def _update_rate(self, xrate):
         raise NotImplementedError("_update_rate")
