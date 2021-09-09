@@ -9,15 +9,4 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-
-from models import *
-
-
-@app.route('/')
-def index():
-    a = XRate.query.all()
-    return "<h1>Hello</h1>", a
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+import views
