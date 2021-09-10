@@ -1,7 +1,8 @@
+from datetime import datetime
 from flask import render_template, make_response, jsonify, request, \
     redirect, url_for
 import xmltodict
-from models import XRate, ApiLog
+from models import XRate, ApiLog, db
 import api
 
 
@@ -91,3 +92,24 @@ class ViewLogs(BaseController):
         page = int(self.request.args.get("page", 1))
         logs = ApiLog.query.order_by(ApiLog.id.desc()).paginate(page, 2)
         return render_template("logs.html", logs=logs)
+
+
+class EditRate(BaseController):
+    def _call(self, from_currency, to_currency):
+        if self.request.method == "GET":
+            return render_template("rate_edit.html",
+                                   from_currency=from_currency,
+                                   to_currency=to_currency)
+
+        if "new_rate" not in request.form:
+            raise Exception("new_rate parametr is required")
+
+        if not request.form["new_rate"]:
+            raise Exception("new_rate must be not empty")
+
+        x_rate = XRate.query.filter_by(from_currency=from_currency,
+                                 to_currency=to_currency).first()
+        x_rate.rate = float(request.form['new_rate'])
+        x_rate.updated = datetime.utcnow()
+        db.session.commit()
+        return redirect(url_for('view_rates'))

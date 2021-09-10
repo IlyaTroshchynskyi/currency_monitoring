@@ -2,7 +2,7 @@ from datetime import datetime
 import traceback
 import importlib
 import requests
-from models import XRate, db, ApiLog, ErrorLog
+from models import XRate, ApiLog, ErrorLog, db
 from config import logging, LOGGER_CONFIG, HTTP_TIMEOUT
 
 
