@@ -2,7 +2,9 @@ from datetime import datetime
 from flask import render_template, make_response, jsonify, request, \
     redirect, url_for
 import xmltodict
-from models import XRate, ApiLog, db
+
+import app
+from models import XRate, ApiLog, ErrorLog, db
 import api
 
 
@@ -29,9 +31,7 @@ class ViewAllRates(BaseController):
 class GetApiRates(BaseController):
     def _call(self, fmt):
         xrates = XRate.query.all()
-        print(xrates)
         xrates = self._filter(xrates)
-        print('after--------------')
 
         if fmt == "json":
             return self._get_json(xrates)
@@ -88,9 +88,14 @@ class UpdateRates(BaseController):
 
 
 class ViewLogs(BaseController):
-    def _call(self):
+    def _call(self, log_type):
+        app.logger.debug("log_type: %s" % log_type)
         page = int(self.request.args.get("page", 1))
-        logs = ApiLog.query.order_by(ApiLog.id.desc()).paginate(page, 2)
+        logs_map = {"api": ApiLog, "error": ErrorLog}
+        if log_type not in logs_map:
+            raise ValueError("Unknown log_type %s" % log_type)
+        log_model = logs_map[log_type]
+        logs = log_model.query.order_by(ApiLog.id.desc()).paginate(page, 2)
         return render_template("logs.html", logs=logs)
 
 

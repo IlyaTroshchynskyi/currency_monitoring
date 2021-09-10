@@ -37,10 +37,10 @@ def update_xrates(from_currency=None, to_currency=None):
     return controllers.UpdateRates().call(from_currency, to_currency)
 
 
-@app.route("/logs")
+@app.route("/logs/<log_type>")
 @check_ip
-def view_logs():
-    return controllers.ViewLogs().call()
+def view_logs(log_type):
+    return controllers.ViewLogs().call(log_type)
 
 
 @app.route("/edit/<int:from_currency>/<int:to_currency>", methods=["GET", "POST"])
