@@ -143,32 +143,32 @@ class Test(unittest.TestCase):
         self.assertIn("Connection to api.privatbank.ua timed out", error_log.error)
 
         api.HTTP_TIMEOUT = 15
-    # ошибка от сервера 520
 
-    # def test_cryptonator_uah(self):
-    #     from_currency = 1000
-    #     to_currency = 980
-    #     xrate = models.XRate.query.filter_by(from_currency=from_currency,
-    #                                          to_currency=to_currency).first()
-    #     updated_before = xrate.updated
-    #     self.assertEqual(xrate.rate, 1.0)
-    #
-    #     api.update_rate(from_currency, to_currency)
-    #
-    #     xrate = models.XRate.query.filter_by(from_currency=from_currency,
-    #                                          to_currency=to_currency).first()
-    #     updated_after = xrate.updated
-    #
-    #     self.assertGreater(xrate.rate, 150000)
-    #     self.assertGreater(updated_after, updated_before)
-    #
-    #     api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
-    #
-    #     self.assertIsNotNone(api_log)
-    #     self.assertEqual(api_log.request_url, "https://api.cryptonator.com/api/ticker/btc-uah")
-    #     self.assertIsNotNone(api_log.response_text)
-    #
-    #     self.assertIn('{"base":"BTC","target":"UAH","price":', api_log.response_text)
+    @unittest.skip("error 520")
+    def test_cryptonator_uah(self):
+        from_currency = 1000
+        to_currency = 980
+        xrate = models.XRate.query.filter_by(from_currency=from_currency,
+                                             to_currency=to_currency).first()
+        updated_before = xrate.updated
+        self.assertEqual(xrate.rate, 1.0)
+
+        api.update_rate(from_currency, to_currency)
+
+        xrate = models.XRate.query.filter_by(from_currency=from_currency,
+                                             to_currency=to_currency).first()
+        updated_after = xrate.updated
+
+        self.assertGreater(xrate.rate, 150000)
+        self.assertGreater(updated_after, updated_before)
+
+        api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
+
+        self.assertIsNotNone(api_log)
+        self.assertEqual(api_log.request_url, "https://api.cryptonator.com/api/ticker/btc-uah")
+        self.assertIsNotNone(api_log.response_text)
+
+        self.assertIn('{"base":"BTC","target":"UAH","price":', api_log.response_text)
 
     def test_xml_api(self):
         r = requests.get("http://localhost:5000/api/xrates/xml")
@@ -199,6 +199,7 @@ class Test(unittest.TestCase):
 
     def test_html_xrates(self):
         r = requests.get("http://localhost:5000/xrates")
+        print(r)
         self.assertTrue(r.ok)
         self.assertIn('<table border="1">', r.text)
         root = ET.fromstring(r.text)

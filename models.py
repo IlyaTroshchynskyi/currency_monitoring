@@ -26,6 +26,10 @@ class ApiLog(db.Model):
     finished = db.Column(db.DateTime)
     error = db.Column(db.Text, nullable=True)
 
+    def json(self):
+        data = self.__dict__
+        return data
+
 
 class ErrorLog(db.Model):
 
