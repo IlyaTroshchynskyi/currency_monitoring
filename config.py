@@ -1,7 +1,7 @@
 import logging
 
 
-HTTP_TIMEOUT = 15
+HTTP_TIMEOUT = 30
 IP_LIST = ["127.0.0.1", "127.0.0.10"]
 
 LOGGING = {

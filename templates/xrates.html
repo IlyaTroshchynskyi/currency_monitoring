@@ -17,6 +17,7 @@
             <td>{{rate.from_currency}}</td>
             <td>{{rate.to_currency}}</td>
             <td>{{rate.rate}}</td>
+            <td>{{rate.module}}</td>
             <td>{{rate.updated}}</td>
             <td>
                 <a href="{{url_for('update_xrates', from_currency=rate.from_currency, to_currency=rate.to_currency)}}">Update</a>

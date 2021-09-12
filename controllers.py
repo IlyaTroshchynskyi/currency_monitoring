@@ -2,10 +2,9 @@ from datetime import datetime
 from flask import render_template, make_response, jsonify, request, \
     redirect, url_for
 import xmltodict
-
-import app
-from models import XRate, ApiLog, ErrorLog, db
+from models import XRate, ApiLog, ErrorLog
 import api
+from app import app, db
 
 
 class BaseController:

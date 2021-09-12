@@ -1,5 +1,4 @@
 import xml.etree.ElementTree as ET
-import requests
 from api import _Api
 
 

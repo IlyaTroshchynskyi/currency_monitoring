@@ -1,6 +1,9 @@
 from api import _Api
 
 
+headers = {'User-Agent': 'user-agent=Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36'}
+
+
 class Api(_Api):
 
     def __init__(self):
@@ -21,10 +24,9 @@ class Api(_Api):
 
         url_end = f"{aliases_map[from_currency]}-{aliases_map[to_currency]}"
         url = f"https://api.cryptonator.com/api/ticker/{url_end}"
-        # https: // api.cryptonator.com / api / ticker / btc - uah
-        print(url)
-        response = self._send_request(url=url, method="get")
-        print(response)
+
+        response = self._send_request(url=url, method="get", headers=headers)
+
         response_json = response.json()
         self.log.debug("Cryptonator response: %s" % response_json)
         rate = self._find_rate(response_json)

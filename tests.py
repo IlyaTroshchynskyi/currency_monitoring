@@ -4,7 +4,7 @@ import json
 import xmltodict
 import xml.etree.ElementTree as ET
 import requests
-import models
+from models import ApiLog, XRate, ErrorLog, init_db
 import api
 
 
@@ -23,22 +23,22 @@ def get_privat_response(*args, **kwds):
 
 class Test(unittest.TestCase):
     def setUp(self):
-        models.init_db()
+        init_db()
 
     @unittest.skip("skip")
     def test_privat_usd(self):
-        xrate = models.XRate.query.filter_by(id=1).first()
+        xrate = XRate.query.filter_by(id=1).first()
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
         api.update_rate(840, 980)
 
-        xrate = models.XRate.query.filter_by(id=1).first()
+        xrate = XRate.query.filter_by(id=1).first()
         updated_after = xrate.updated
 
         self.assertGreater(xrate.rate, 25)
         self.assertGreater(updated_after, updated_before)
-        api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
+        api_log = ApiLog.query.order_by(ApiLog.created.desc()).first()
         self.assertEqual(api_log.request_url,
                          "https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11")
         self.assertIsNotNone(api_log.response_text)
@@ -47,20 +47,20 @@ class Test(unittest.TestCase):
 
     @unittest.skip('skip')
     def test_privat_btc(self):
-        xrate = models.XRate.query.filter_by(from_currency=1000,
+        xrate = XRate.query.filter_by(from_currency=1000,
                                              to_currency=840).first()
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
         api.update_rate(1000, 840)
 
-        xrate = models.XRate.query.filter_by(from_currency=1000,
+        xrate = XRate.query.filter_by(from_currency=1000,
                                              to_currency=840).first()
         updated_after = xrate.updated
 
         self.assertGreater(xrate.rate, 5000)
         self.assertGreater(updated_after, updated_before)
-        api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
+        api_log = ApiLog.query.order_by(ApiLog.created.desc()).first()
         self.assertEqual(api_log.request_url,
                          "https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11")
 
@@ -69,16 +69,16 @@ class Test(unittest.TestCase):
 
     @unittest.skip('skip')
     def test_cbr(self):
-        xrate = models.XRate.query.filter_by(from_currency=840, to_currency=643).first()
+        xrate = XRate.query.filter_by(from_currency=840, to_currency=643).first()
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
         api.update_rate(840, 643)
-        xrate = models.XRate.query.filter_by(from_currency=840, to_currency=643).first()
+        xrate = XRate.query.filter_by(from_currency=840, to_currency=643).first()
         updated_after = xrate.updated
 
         self.assertGreater(xrate.rate, 10)
         self.assertGreater(updated_after, updated_before)
-        api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
+        api_log = ApiLog.query.order_by(ApiLog.created.desc()).first()
         self.assertIsNotNone(api_log)
         self.assertEqual(api_log.request_url, "http://www.cbr.ru/scripts/XML_daily.asp")
         self.assertIsNotNone(api_log.response_text)
@@ -88,19 +88,19 @@ class Test(unittest.TestCase):
     @patch('api._Api._send', new=get_privat_response)
     def test_privat_mock(self):
 
-        xrate = models.XRate.query.filter_by(id=1).first()
+        xrate = XRate.query.filter_by(id=1).first()
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
         api.update_rate(840, 980)
 
-        xrate = models.XRate.query.filter_by(id=1).first()
+        xrate = XRate.query.filter_by(id=1).first()
         updated_after = xrate.updated
 
         self.assertEqual(xrate.rate, 30)
         self.assertGreater(updated_after, updated_before)
 
-        api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
+        api_log = ApiLog.query.order_by(ApiLog.created.desc()).first()
 
         self.assertIsNotNone(api_log)
         self.assertEqual(api_log.request_url,
@@ -113,20 +113,20 @@ class Test(unittest.TestCase):
     @unittest.skip('skip')
     def test_api_error(self):
         api.HTTP_TIMEOUT = 0.001
-        xrate = models.XRate.query.filter_by(id=1).first()
+        xrate = XRate.query.filter_by(id=1).first()
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
         self.assertRaises(requests.exceptions.RequestException,
                           api.update_rate, 840, 980)
 
-        xrate = models.XRate.query.filter_by(id=1).first()
+        xrate = XRate.query.filter_by(id=1).first()
         updated_after = xrate.updated
 
         self.assertEqual(xrate.rate, 1.0)
         self.assertEqual(updated_after, updated_before)
 
-        api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
+        api_log = ApiLog.query.order_by(ApiLog.created.desc()).first()
 
         self.assertIsNotNone(api_log)
         self.assertEqual(api_log.request_url,
@@ -134,7 +134,7 @@ class Test(unittest.TestCase):
         self.assertIsNone(api_log.response_text)
         self.assertIsNotNone(api_log.error)
 
-        error_log = models.ErrorLog.query.order_by(models.ErrorLog.created.desc()).first()
+        error_log = ErrorLog.query.order_by(ErrorLog.created.desc()).first()
         self.assertIsNotNone(error_log)
         self.assertEqual(error_log.request_url,
                          "https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11")
@@ -148,21 +148,21 @@ class Test(unittest.TestCase):
     def test_cryptonator_uah(self):
         from_currency = 1000
         to_currency = 980
-        xrate = models.XRate.query.filter_by(from_currency=from_currency,
+        xrate = XRate.query.filter_by(from_currency=from_currency,
                                              to_currency=to_currency).first()
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
         api.update_rate(from_currency, to_currency)
 
-        xrate = models.XRate.query.filter_by(from_currency=from_currency,
+        xrate = XRate.query.filter_by(from_currency=from_currency,
                                              to_currency=to_currency).first()
         updated_after = xrate.updated
 
         self.assertGreater(xrate.rate, 150000)
         self.assertGreater(updated_after, updated_before)
 
-        api_log = models.ApiLog.query.order_by(models.ApiLog.created.desc()).first()
+        api_log = ApiLog.query.order_by(ApiLog.created.desc()).first()
 
         self.assertIsNotNone(api_log)
         self.assertEqual(api_log.request_url, "https://api.cryptonator.com/api/ticker/btc-uah")

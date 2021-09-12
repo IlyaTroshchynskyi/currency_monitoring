@@ -1,11 +1,11 @@
 import logging
 from logging.config import dictConfig
-from flask import Flask
 from flask.logging import default_handler
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
 from config import LOGGING
+
 
 dictConfig(LOGGING)
 app = Flask(__name__)

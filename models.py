@@ -43,10 +43,6 @@ class ErrorLog(db.Model):
 
 
 def init_db():
-    # XRate.__table__.drop(app.config['SQLALCHEMY_DATABASE_URI'])
-    # XRate.__table__.create(app.config['SQLALCHEMY_DATABASE_URI'])
-    # db.drop_all()
-    # db.create_all()
     XRate.query.delete()
     cur = XRate(from_currency=840, to_currency=980, rate=1, module="privat_api")
     cur2 = XRate(from_currency=840, to_currency=643, rate=1, module="cbr_api")
@@ -60,8 +56,6 @@ def init_db():
     db.session.commit()
 
     for m in (ApiLog, ErrorLog):
-        # m.__table__.drop(app.config['SQLALCHEMY_DATABASE_URI'])
-        # m.__table__.create(app.config['SQLALCHEMY_DATABASE_URI'])
         m.query.delete()
     db.session.commit()
     print("db created!")

@@ -2,13 +2,13 @@ from datetime import datetime
 import traceback
 import importlib
 import requests
+
+from config import logging, LOGGING, HTTP_TIMEOUT
 from models import XRate, ApiLog, ErrorLog, db
-from config import logging, LOGGER_CONFIG, HTTP_TIMEOUT
+import logging.config
 
 
-fh = logging.FileHandler(LOGGER_CONFIG["file"])
-fh.setLevel(LOGGER_CONFIG["level"])
-fh.setFormatter(LOGGER_CONFIG["formatter"])
+logging.config.dictConfig(LOGGING)
 
 
 def update_rate(from_currency, to_currency):
@@ -22,8 +22,8 @@ def update_rate(from_currency, to_currency):
 class _Api:
     def __init__(self, logger_name):
         self.log = logging.getLogger(logger_name)
-        self.log.addHandler(fh)
-        self.log.setLevel(LOGGER_CONFIG["level"])
+        self.log = logging.getLogger("Api")
+        self.log.name = logger_name
 
     def update_rate(self, xrate):
         self.log.info("Started update for: %s" % xrate)
@@ -37,12 +37,16 @@ class _Api:
     def _update_rate(self, xrate):
         raise NotImplementedError("_update_rate")
 
-    def _send_request(self, url, method, data=None, headers=None):
+    def _send_request(self, url, method, data='', headers=''):
+
         log = ApiLog(request_url=url, request_data=data, request_method=method,
-                     request_headers=headers)
+                     request_headers=str(headers))
         try:
             response = self._send(method=method, url=url, headers=headers, data=data)
             log.response_text = response.text
+            log.finished = datetime.utcnow()
+            db.session.add(log)
+            db.session.commit()
             return response
         except Exception as ex:
             self.log.exception("Error during request sending")
